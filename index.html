@@ -1,453 +1,963 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cuaderno de Prácticas FCT</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Kalam:wght@300;400;700&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f1f5f9;
-            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23d4c8b8' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-        }
-        .font-handwriting { font-family: 'Kalam', cursive; }
-        .hidden { display: none; }
-        .spinner { border: 4px solid rgba(0, 0, 0, 0.1); width: 24px; height: 24px; border-radius: 50%; border-left-color: #fff; animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .toast { position: fixed; bottom: 20px; right: 20px; transform: translateX(120%); padding: 16px 24px; border-radius: 8px; color: white; z-index: 100; transition: transform 0.4s ease-in-out; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); border: 1px solid rgba(255,255,255,0.2); }
-        .toast.show { transform: translateX(0); }
-        .notebook-rings {
-            background-image:
-                radial-gradient(circle at 3px 6px, #9ca3af 3px, transparent 3px),
-                radial-gradient(circle at 3px 6px, #e5e7eb 4px, transparent 4px);
-            background-size: 100% 30px;
-            background-position: left top;
-            background-repeat: repeat-y;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cuaderno de Prácticas FCT — Pro</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Kalam:wght@300;400;700&display=swap');
+    body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
+    .font-handwriting { font-family: 'Kalam', cursive; }
+    .hidden { display: none; }
+    .spinner { border: 4px solid rgba(0, 0, 0, 0.1); width: 24px; height: 24px; border-radius: 50%; border-left-color: #4f46e5; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .toast { position: fixed; bottom: 20px; right: 20px; transform: translateX(120%); padding: 16px 24px; border-radius: 8px; color: white; z-index: 100; transition: transform 0.4s ease-in-out; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); border: 1px solid rgba(255,255,255,0.2); }
+    .toast.show { transform: translateX(0); }
+    .notebook-rings { background-image: radial-gradient(circle at 3px 6px, #9ca3af 3px, transparent 3px), radial-gradient(circle at 3px 6px, #e5e7eb 4px, transparent 4px); background-size: 100% 30px; background-position: left top; background-repeat: repeat-y; }
+    /* Focus trap helper */
+    .focus-ring:focus { outline: 3px solid #6366f1; outline-offset: 2px; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
 </head>
 <body class="text-slate-900">
-
-    <div id="app">
-        <!-- VISTA DE CARGA INICIAL -->
-        <div id="loading-view" class="flex flex-col items-center justify-center min-h-screen">
-            <div class="spinner !w-12 !h-12 !border-4 !border-slate-300 !border-l-indigo-600"></div>
-            <p class="mt-4 text-slate-500 font-semibold">Cargando cuaderno...</p>
-        </div>
-
-        <!-- VISTA DE LOGIN -->
-        <div id="login-view" class="hidden min-h-screen flex items-center justify-center p-4">
-            <div class="w-full max-w-md">
-                <header class="text-center mb-8">
-                    <i class="fas fa-book-open text-5xl text-indigo-600"></i>
-                    <h1 class="font-handwriting text-5xl font-bold text-slate-800 mt-4">Cuaderno de Prácticas</h1>
-                    <p class="text-slate-500 mt-2 text-lg">Inicia sesión para continuar.</p>
-                </header>
-                <div class="bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-lg border border-slate-200">
-                    <form id="login-form">
-                        <div class="space-y-4">
-                            <input type="email" id="login-email" placeholder="Tu email" class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-200" required>
-                            <input type="password" id="login-password" placeholder="Tu contraseña" class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-200" required>
-                        </div>
-                        <button type="submit" class="mt-6 w-full bg-slate-800 text-white font-semibold py-3 px-4 rounded-lg hover:bg-slate-900 transition-colors flex items-center justify-center">
-                            <span id="login-btn-text">Iniciar Sesión</span>
-                            <div id="login-spinner" class="spinner hidden ml-2"></div>
-                        </button>
-                    </form>
-                     <p class="text-xs text-slate-400 mt-4 text-center">No tienes cuenta? Habla con tu tutor para que te de de alta.</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- VISTA PRINCIPAL DE LA APLICACIÓN (NOTEBOOK) -->
-        <div id="main-app-view" class="hidden max-w-6xl mx-auto p-4">
-             <div class="grid grid-cols-12 gap-6">
-                <div class="col-span-1 notebook-rings"></div>
-                <div class="col-span-11 bg-white rounded-r-2xl shadow-2xl border border-slate-200 p-8">
-                    
-                    <!-- VISTA DEL ALUMNO -->
-                    <div id="student-view" class="hidden">
-                        <header class="flex items-center justify-between mb-8 pb-4 border-b-2 border-dashed">
-                            <div>
-                                <h1 class="text-3xl font-bold text-slate-800">Mi Cuaderno</h1>
-                                <p id="student-welcome" class="text-slate-500">Bienvenido/a. Aquí puedes registrar tu actividad diaria.</p>
-                            </div>
-                            <button id="logout-btn-student" class="bg-red-600 text-white text-sm font-bold py-2 px-4 rounded-lg hover:bg-red-700"><i class="fas fa-sign-out-alt mr-2"></i>Cerrar Sesión</button>
-                        </header>
-                        
-                        <!-- FORMULARIO DE REGISTRO -->
-                        <h2 class="text-2xl font-bold text-slate-800 mb-4">Nuevo Registro de Práctica</h2>
-                        <form id="practice-form" class="space-y-6 mb-8">
-                            <div class="grid md:grid-cols-2 gap-6">
-                                <label class="block"><span class="font-semibold text-slate-700">Empresa / Entidad</span><input type="text" id="company-name" class="mt-1 block w-full rounded-lg border-slate-300 shadow-sm" required></label>
-                                <label class="block"><span class="font-semibold text-slate-700">Fecha</span><input type="date" id="practice-date" class="mt-1 block w-full rounded-lg border-slate-300 shadow-sm" required></label>
-                            </div>
-                            <div class="relative flex items-start bg-slate-50 p-4 rounded-lg border">
-                                <div class="flex h-6 items-center"><input id="absence-checkbox" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600"></div>
-                                <div class="ml-3 text-sm leading-6"><label for="absence-checkbox" class="font-medium text-gray-900">No he podido asistir</label><p class="text-gray-500">Marca esta casilla si has faltado.</p></div>
-                            </div>
-                            <div id="attendance-fields">
-                                <div class="grid md:grid-cols-2 gap-6">
-                                    <label class="block"><span class="font-semibold text-slate-700">Hora de Entrada</span><input type="time" id="start-time" class="mt-1 block w-full rounded-lg border-slate-300"></label>
-                                    <label class="block"><span class="font-semibold text-slate-700">Hora de Salida</span><input type="time" id="end-time" class="mt-1 block w-full rounded-lg border-slate-300"></label>
-                                </div>
-                                <div class="mt-6"><label class="block"><span class="font-semibold text-slate-700">Actividad Realizada</span><textarea id="activity-description" rows="4" class="mt-1 block w-full rounded-lg border-slate-300"></textarea></label></div>
-                            </div>
-                            <div id="absence-fields" class="hidden">
-                                <label class="block"><span class="font-semibold text-slate-700">Motivo de la Ausencia</span><textarea id="absence-reason" rows="3" class="mt-1 block w-full rounded-lg border-slate-300"></textarea></label>
-                            </div>
-                            <div class="flex justify-end items-center pt-6 border-t">
-                                <span class="text-xl font-bold mr-6 text-slate-700">Horas: <span id="hours-computed" class="text-indigo-600">0.00</span></span>
-                                <button type="submit" id="submit-button" class="bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 flex items-center">
-                                    <span id="submit-button-text"><i class="fas fa-check mr-2"></i> Guardar Parte</span>
-                                    <div id="submit-spinner" class="spinner !w-5 !h-5 hidden" style="border-left-color: white; border-width: 2px;"></div>
-                                </button>
-                            </div>
-                        </form>
-                        
-                        <!-- HISTORIAL DEL ALUMNO -->
-                        <div id="student-history-view" class="pt-8 border-t-2 border-dashed">
-                            <h2 class="text-2xl font-bold text-slate-800 mb-4">Mi Historial de Registros</h2>
-                            <div class="overflow-x-auto"><table class="w-full text-sm text-left"><thead class="bg-slate-100 text-xs text-slate-700 uppercase"><tr><th class="px-6 py-3">Fecha</th><th class="px-6 py-3">Empresa</th><th class="px-6 py-3">Horas</th><th class="px-6 py-3">Actividad/Motivo</th><th class="px-6 py-3">Estado</th></tr></thead><tbody id="student-history-tbody"></tbody></table></div>
-                        </div>
-                    </div>
-                    
-                    <!-- VISTA DEL TUTOR -->
-                    <div id="tutor-view" class="hidden">
-                        <header class="flex items-center justify-between mb-8 pb-4 border-b-2 border-dashed">
-                            <div>
-                                <h1 class="text-3xl font-bold text-slate-800">Panel de Tutor</h1>
-                                <p id="tutor-welcome" class="text-slate-500">Gestionando partes de los alumnos.</p>
-                            </div>
-                            <button id="logout-btn-tutor" class="bg-red-600 text-white text-sm font-bold py-2 px-4 rounded-lg hover:bg-red-700"><i class="fas fa-sign-out-alt mr-2"></i>Cerrar Sesión</button>
-                        </header>
-                        <div class="bg-slate-50/70 p-4 rounded-xl border mb-6">
-                            <div class="grid md:grid-cols-4 gap-4">
-                                <input type="text" id="filter-student" placeholder="Buscar por alumno..." class="rounded-lg border-slate-300">
-                                <input type="text" id="filter-company" placeholder="Buscar por empresa..." class="rounded-lg border-slate-300">
-                                <input type="date" id="filter-date-from" class="rounded-lg border-slate-300 text-slate-500">
-                                <input type="date" id="filter-date-to" class="rounded-lg border-slate-300 text-slate-500">
-                            </div>
-                            <div class="flex justify-between items-center mt-4 pt-4 border-t">
-                                <div class="flex gap-4 text-sm font-semibold text-slate-600">
-                                    <span>Registros: <b id="stat-total-records" class="text-indigo-600">0</b></span>
-                                    <span>Horas Totales: <b id="stat-total-hours" class="text-indigo-600">0.00</b></span>
-                                    <span>Ausencias: <b id="stat-total-absences" class="text-red-600">0</b></span>
-                                </div>
-                                <button id="export-csv-btn" class="bg-emerald-600 text-white text-sm font-bold py-2 px-4 rounded-lg hover:bg-emerald-700"><i class="fas fa-file-csv mr-2"></i> Exportar</button>
-                            </div>
-                        </div>
-                        <div class="overflow-x-auto mt-4"><table class="w-full text-sm text-left"><thead class="bg-slate-100 text-xs text-slate-700 uppercase"><tr><th class="px-6 py-3">Alumno</th><th class="px-6 py-3">Fecha</th><th class="px-6 py-3">Empresa</th><th class="px-6 py-3">Horas</th><th class="px-6 py-3">Actividad/Motivo</th><th class="px-6 py-3">Estado</th><th class="px-6 py-3">Acciones</th></tr></thead><tbody id="records-tbody"></tbody></table></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- MODAL DE BORRADO -->
-        <div id="confirm-delete-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div class="bg-white w-full max-w-md p-8 rounded-2xl shadow-2xl text-center">
-                <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
-                    <i class="fas fa-exclamation-triangle text-2xl text-red-600"></i>
-                </div>
-                <h2 class="text-xl font-bold mt-4">Eliminar Registro</h2>
-                <p class="text-slate-500 mt-2">¿Estás seguro? Esta acción no se puede deshacer.</p>
-                <div class="mt-6 flex justify-center gap-4">
-                    <button id="cancel-delete-btn" class="bg-slate-200 text-slate-800 font-semibold py-2 px-6 rounded-lg hover:bg-slate-300">Cancelar</button>
-                    <button id="confirm-delete-btn" class="bg-red-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-red-700">Eliminar</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- MODAL DE EDICIÓN -->
-        <div id="edit-record-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div class="bg-white w-full max-w-2xl p-8 rounded-2xl shadow-2xl relative max-h-[90vh] overflow-y-auto">
-                <button id="close-edit-modal" class="absolute top-4 right-4 text-slate-400 hover:text-slate-800"><i class="fas fa-times text-xl"></i></button>
-                <h2 class="text-2xl font-bold mb-6">Editar Registro</h2>
-                <form id="edit-form" class="space-y-4">
-                    <input type="hidden" id="edit-record-id">
-                    <div class="grid md:grid-cols-2 gap-4">
-                        <label class="block"><span class="font-semibold text-slate-700">Nombre Alumno</span><input type="text" id="edit-student-name" class="mt-1 block w-full rounded-lg border-slate-300 bg-slate-100" readonly></label>
-                        <label class="block"><span class="font-semibold text-slate-700">Empresa</span><input type="text" id="edit-company-name" class="mt-1 block w-full rounded-lg border-slate-300" required></label>
-                    </div>
-                    <label class="block"><span class="font-semibold text-slate-700">Fecha</span><input type="date" id="edit-practice-date" class="mt-1 block w-full rounded-lg border-slate-300" required></label>
-                    <div class="grid md:grid-cols-3 gap-4 items-end">
-                        <label class="block"><span class="font-semibold text-slate-700">Hora Entrada</span><input type="time" id="edit-start-time" class="mt-1 block w-full rounded-lg border-slate-300"></label>
-                        <label class="block"><span class="font-semibold text-slate-700">Hora Salida</span><input type="time" id="edit-end-time" class="mt-1 block w-full rounded-lg border-slate-300"></label>
-                        <label class="block"><span class="font-semibold text-slate-700">Horas</span><input type="number" step="0.01" id="edit-hours" class="mt-1 block w-full rounded-lg border-slate-300 bg-slate-100" readonly></label>
-                    </div>
-                    <label class="block"><span id="edit-activity-label" class="font-semibold text-slate-700">Actividad / Motivo Ausencia</span><textarea id="edit-activity" rows="4" class="mt-1 block w-full rounded-lg border-slate-300"></textarea></label>
-                    <button type="submit" class="mt-4 w-full bg-indigo-600 text-white font-semibold py-3 px-4 rounded-lg hover:bg-indigo-700 flex items-center justify-center">
-                        <span id="edit-btn-text">Guardar Cambios</span>
-                        <div id="edit-spinner" class="spinner hidden ml-2"></div>
-                    </button>
-                </form>
-            </div>
-        </div>
+  <div id="app">
+    <!-- LOADING VIEW -->
+    <div id="loading-view" class="flex flex-col items-center justify-center min-h-screen">
+      <div class="spinner !w-12 !h-12"></div>
+      <p class="mt-4 text-slate-500 font-semibold">Cargando cuaderno...</p>
     </div>
 
-    <div id="toast-notification" class="toast"></div>
-    
-    <script type="module">
-        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-        const SUPABASE_URL = 'https://belsjuyzcdffyfgleoco.supabase.co'; 
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJlbHNqdXl6Y2RmZnlmZ2xlb2NvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTczMjYxMzEsImV4cCI6MjA3MjkwMjEzMX0.zeOW4x9veTddouww3FLe6z7d77X3RdDLB9-hNHD6n5w';
-        
-        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    <!-- LOGIN VIEW -->
+    <div id="login-view" class="hidden min-h-screen flex items-center justify-center p-4">
+      <div class="w-full max-w-md" role="form" aria-labelledby="login-title">
+        <header class="text-center mb-8">
+          <i class="fas fa-book-open text-5xl text-indigo-600" aria-hidden="true"></i>
+          <h1 id="login-title" class="font-handwriting text-5xl font-bold text-slate-800 mt-4">Cuaderno de Prácticas</h1>
+          <p class="text-slate-500 mt-2 text-lg">Inicia sesión para continuar.</p>
+        </header>
+        <div class="bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-lg border border-slate-200">
+          <form id="login-form">
+            <div class="space-y-4">
+              <label class="block">
+                <span class="font-semibold text-slate-700">Email</span>
+                <input type="email" id="login-email" class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-200" required />
+              </label>
+              <label class="block">
+                <span class="font-semibold text-slate-700">Contraseña</span>
+                <input type="password" id="login-password" class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-200" required />
+              </label>
+            </div>
+            <button type="submit" id="login-button" class="mt-6 w-full bg-slate-800 text-white font-semibold py-3 px-4 rounded-lg hover:bg-slate-900 transition-colors flex items-center justify-center">
+              <span id="login-btn-text">Iniciar Sesión</span>
+              <div id="login-spinner" class="spinner hidden ml-2"></div>
+            </button>
+          </form>
+          <p class="text-xs text-slate-400 mt-4 text-center">¿No tienes cuenta? Contacta con tu tutor para el alta.</p>
+        </div>
+      </div>
+    </div>
 
-        const DOMElements = {
-            loadingView: document.getElementById('loading-view'),
-            loginView: document.getElementById('login-view'),
-            mainAppView: document.getElementById('main-app-view'),
-            studentView: document.getElementById('student-view'),
-            tutorView: document.getElementById('tutor-view'),
-            confirmDeleteModal: document.getElementById('confirm-delete-modal'),
-            editRecordModal: document.getElementById('edit-record-modal'),
-            toast: document.getElementById('toast-notification'),
-        };
+    <!-- MAIN APP VIEW -->
+    <div id="main-app-view" class="hidden max-w-6xl mx-auto p-4">
+      <div class="grid grid-cols-12 gap-6">
+        <div class="col-span-1 notebook-rings" aria-hidden="true"></div>
+        <div class="col-span-11 bg-white rounded-r-2xl shadow-2xl border border-slate-200 p-8">
 
-        let currentUserProfile = null;
-        let recordsSubscription = null;
+          <!-- STUDENT VIEW -->
+          <div id="student-view" class="hidden">
+            <header class="flex items-center justify-between mb-8 pb-4 border-b-2 border-dashed">
+              <div>
+                <h1 class="text-3xl font-bold text-slate-800">Mi Cuaderno</h1>
+                <p id="student-welcome" class="text-slate-500">Bienvenido/a. Aquí puedes registrar tu actividad diaria.</p>
+              </div>
+              <div class="flex gap-2">
+                <button id="student-export-csv" class="bg-emerald-600 text-white text-sm font-bold py-2 px-4 rounded-lg hover:bg-emerald-700"><i class="fas fa-file-csv mr-2"></i> Exportar CSV</button>
+                <button id="student-print-report" class="bg-slate-800 text-white text-sm font-bold py-2 px-4 rounded-lg hover:bg-slate-900"><i class="fas fa-print mr-2"></i> Imprimir informe</button>
+                <button id="logout-btn-student" class="bg-red-600 text-white text-sm font-bold py-2 px-4 rounded-lg hover:bg-red-700"><i class="fas fa-sign-out-alt mr-2" aria-hidden="true"></i>Cerrar Sesión</button>
+              </div>
+            </header>
 
-        const switchView = (view) => {
-            Object.values(DOMElements).forEach(el => el.classList.add('hidden'));
-            if (DOMElements[view]) {
-                DOMElements[view].classList.remove('hidden');
-            }
-        };
+            <!-- KPI CARDS -->
+            <section class="mb-8">
+              <h2 class="text-2xl font-bold text-slate-800 mb-4">Mis estadísticas</h2>
+              <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-4">
+                  <p class="text-xs uppercase text-indigo-700 font-semibold">Horas Totales</p>
+                  <p id="st-kpi-hours" class="text-2xl md:text-3xl font-extrabold text-indigo-900 mt-1">0.00</p>
+                </div>
+                <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-4">
+                  <p class="text-xs uppercase text-emerald-700 font-semibold">Días Asistidos</p>
+                  <p id="st-kpi-days" class="text-2xl md:text-3xl font-extrabold text-emerald-900 mt-1">0</p>
+                </div>
+                <div class="bg-rose-50 border border-rose-100 rounded-xl p-4">
+                  <p class="text-xs uppercase text-rose-700 font-semibold">Ausencias</p>
+                  <p id="st-kpi-absences" class="text-2xl md:text-3xl font-extrabold text-rose-900 mt-1">0</p>
+                </div>
+                <div class="bg-amber-50 border border-amber-100 rounded-xl p-4">
+                  <p class="text-xs uppercase text-amber-700 font-semibold">Horas / Día</p>
+                  <p id="st-kpi-avg" class="text-2xl md:text-3xl font-extrabold text-amber-900 mt-1">0.00</p>
+                </div>
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                  <p class="text-xs uppercase text-slate-600 font-semibold">Racha de Asistencia</p>
+                  <p id="st-kpi-streak" class="text-2xl md:text-3xl font-extrabold text-slate-900 mt-1">0 días</p>
+                </div>
+              </div>
+            </section>
 
-        supabase.auth.onAuthStateChange(async (event, session) => {
-            if (session) {
-                const { data, error } = await supabase.from('profiles').select('*, aulas(nombre)').eq('id', session.user.id).single();
-                if (data) {
-                    currentUserProfile = data;
-                    switchView('main-app-view');
-                    if (data.role === 'tutor') {
-                        DOMElements.tutorView.classList.remove('hidden');
-                        document.getElementById('tutor-welcome').textContent = `Gestionando el aula: ${data.aulas ? data.aulas.nombre : '(Aula no asignada)'}`;
-                        listenToTutorRecords();
-                    } else {
-                        DOMElements.studentView.classList.remove('hidden');
-                        document.getElementById('student-welcome').textContent = `Bienvenido/a, ${data.full_name || 'Alumno'}`;
-                        listenToStudentRecords();
-                    }
-                } else {
-                    showToast('No se pudo cargar el perfil de usuario.', 'bg-red-500');
-                    supabase.auth.signOut();
-                }
-            } else {
-                switchView('login-view');
-                currentUserProfile = null;
-                if (recordsSubscription) {
-                    supabase.removeChannel(recordsSubscription);
-                    recordsSubscription = null;
-                }
-            }
-        });
+            <!-- CHARTS -->
+            <section class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+              <div class="bg-white border rounded-xl p-4 shadow-sm">
+                <h3 class="font-semibold text-slate-800 mb-2">Horas por día (últimos 30 días)</h3>
+                <canvas id="st-chart-hours-30"></canvas>
+              </div>
+              <div class="bg-white border rounded-xl p-4 shadow-sm">
+                <h3 class="font-semibold text-slate-800 mb-2">Horas por empresa</h3>
+                <canvas id="st-chart-company"></canvas>
+              </div>
+              <div class="bg-white border rounded-xl p-4 shadow-sm md:col-span-2">
+                <h3 class="font-semibold text-slate-800 mb-2">Resumen mensual (año actual)</h3>
+                <canvas id="st-chart-monthly"></canvas>
+              </div>
+            </section>
 
-        // Lógica de Login/Logout
-        document.getElementById('login-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
-            const { error } = await supabase.auth.signInWithPassword({ email, password });
-            if (error) showToast(`Error: ${error.message}`, 'bg-red-500');
-        });
+            <!-- NEW PRACTICE FORM -->
+            <h2 class="text-2xl font-bold text-slate-800 mb-4">Nuevo Registro de Práctica</h2>
+            <form id="practice-form" class="space-y-6 mb-8" novalidate>
+              <div class="grid md:grid-cols-2 gap-6">
+                <label class="block">
+                  <span class="font-semibold text-slate-700">Empresa / Entidad</span>
+                  <input type="text" id="company-name" class="mt-1 block w-full rounded-lg border-slate-300 shadow-sm" required minlength="2" maxlength="100" />
+                </label>
+                <label class="block">
+                  <span class="font-semibold text-slate-700">Fecha</span>
+                  <input type="date" id="practice-date" class="mt-1 block w-full rounded-lg border-slate-300 shadow-sm" required />
+                </label>
+              </div>
 
-        const handleLogout = () => supabase.auth.signOut();
-        document.getElementById('logout-btn-student').addEventListener('click', handleLogout);
-        document.getElementById('logout-btn-tutor').addEventListener('click', handleLogout);
+              <div class="relative flex items-start bg-slate-50 p-4 rounded-lg border">
+                <div class="flex h-6 items-center">
+                  <input id="absence-checkbox" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600" />
+                </div>
+                <div class="ml-3 text-sm leading-6">
+                  <label for="absence-checkbox" class="font-medium text-gray-900">No he podido asistir</label>
+                  <p class="text-gray-500">Marca esta casilla si has faltado.</p>
+                </div>
+              </div>
 
-        // Lógica común
-        const showToast = (message, className) => { DOMElements.toast.textContent = message; DOMElements.toast.className = `toast show ${className}`; setTimeout(() => { DOMElements.toast.className = 'toast'; }, 4000); };
-        const statusStyles = {
-            'Pendiente': 'bg-yellow-100 text-yellow-800',
-            'Validado': 'bg-green-100 text-green-800',
-            'Requiere Revisión': 'bg-red-100 text-red-800',
-            'default': 'bg-slate-100 text-slate-800'
-        };
+              <div id="attendance-fields">
+                <div class="grid md:grid-cols-2 gap-6">
+                  <label class="block">
+                    <span class="font-semibold text-slate-700">Hora de Entrada</span>
+                    <input type="time" id="start-time" class="mt-1 block w-full rounded-lg border-slate-300" />
+                  </label>
+                  <label class="block">
+                    <span class="font-semibold text-slate-700">Hora de Salida</span>
+                    <input type="time" id="end-time" class="mt-1 block w-full rounded-lg border-slate-300" />
+                  </label>
+                </div>
+                <div class="mt-6">
+                  <label class="block">
+                    <span class="font-semibold text-slate-700">Actividad Realizada</span>
+                    <textarea id="activity-description" rows="4" class="mt-1 block w-full rounded-lg border-slate-300" maxlength="1000"></textarea>
+                  </label>
+                </div>
+              </div>
 
-        // --- LÓGICA DEL ALUMNO ---
-        const practiceForm = document.getElementById('practice-form');
-        const absenceCheckbox = document.getElementById('absence-checkbox');
-        const attendanceFields = document.getElementById('attendance-fields');
-        const absenceFields = document.getElementById('absence-fields');
-        const startTime = document.getElementById('start-time');
-        const endTime = document.getElementById('end-time');
-        const hoursComputed = document.getElementById('hours-computed');
+              <div id="absence-fields" class="hidden">
+                <label class="block">
+                  <span class="font-semibold text-slate-700">Motivo de la Ausencia</span>
+                  <textarea id="absence-reason" rows="3" class="mt-1 block w-full rounded-lg border-slate-300" maxlength="500"></textarea>
+                </label>
+              </div>
 
-        const toggleAbsenceFields = () => {
-            attendanceFields.classList.toggle('hidden', absenceCheckbox.checked);
-            absenceFields.classList.toggle('hidden', !absenceCheckbox.checked);
-            computeHours();
-        };
+              <div class="flex flex-wrap gap-4 justify-between items-center pt-6 border-t">
+                <div class="flex items-center gap-6">
+                  <span class="text-xl font-bold text-slate-700">Horas: <span id="hours-computed" class="text-indigo-600">0.00</span></span>
+                  <span id="warning-message" class="text-sm text-red-600 hidden"><i class="fa-solid fa-triangle-exclamation mr-1"></i><span>Revisa horas/fecha.</span></span>
+                </div>
+                <div class="flex items-center gap-3">
+                  <button type="reset" id="reset-button" class="bg-slate-200 text-slate-800 font-semibold py-3 px-4 rounded-lg hover:bg-slate-300">Limpiar</button>
+                  <button type="submit" id="submit-button" class="bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-indigo-700 flex items-center disabled:opacity-60 disabled:cursor-not-allowed">
+                    <span id="submit-button-text"><i class="fas fa-check mr-2" aria-hidden="true"></i>Guardar Parte</span>
+                    <div id="submit-spinner" class="spinner hidden ml-2" style="border-width: 2px"></div>
+                  </button>
+                </div>
+              </div>
+            </form>
 
-        const computeHours = () => {
-            if (absenceCheckbox.checked) { hoursComputed.textContent = '0.00'; return; }
-            if (startTime.value && endTime.value) {
-                const diff = (new Date(`1970-01-01T${endTime.value}`) - new Date(`1970-01-01T${startTime.value}`)) / 36e5;
-                hoursComputed.textContent = Math.max(0, diff).toFixed(2);
-            }
-        };
+            <!-- STUDENT HISTORY -->
+            <div id="student-history-view" class="pt-8 border-t-2 border-dashed">
+              <h2 class="text-2xl font-bold text-slate-800 mb-4">Mi Historial de Registros</h2>
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left">
+                  <thead class="bg-slate-100 text-xs text-slate-700 uppercase">
+                    <tr>
+                      <th class="px-6 py-3">Fecha</th>
+                      <th class="px-6 py-3">Empresa</th>
+                      <th class="px-6 py-3">Horas</th>
+                      <th class="px-6 py-3">Actividad/Motivo</th>
+                      <th class="px-6 py-3">Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody id="student-history-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
 
-        practiceForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const record = {
-                alumno_id: currentUserProfile.id,
-                aula_id: currentUserProfile.aula_id,
-                companyName: document.getElementById('company-name').value.trim(),
-                practiceDate: document.getElementById('practice-date').value,
-                isAbsent: absenceCheckbox.checked,
-                startTime: absenceCheckbox.checked ? null : startTime.value,
-                endTime: absenceCheckbox.checked ? null : endTime.value,
-                activity: absenceCheckbox.checked ? null : document.getElementById('activity-description').value.trim(),
-                absenceReason: absenceCheckbox.checked ? document.getElementById('absence-reason').value.trim() : null,
-                hours: parseFloat(hoursComputed.textContent) || 0,
-            };
-            const { error } = await supabase.from('practicas').insert([record]);
-            if (error) showToast('Error al guardar el parte.', 'bg-red-500');
-            else { showToast('Parte guardado con éxito', 'bg-emerald-600'); practiceForm.reset(); toggleAbsenceFields(); }
-        });
+          <!-- TUTOR VIEW -->
+          <div id="tutor-view" class="hidden">
+            <header class="flex items-center justify-between mb-8 pb-4 border-b-2 border-dashed">
+              <div>
+                <h1 class="text-3xl font-bold text-slate-800">Panel de Tutor</h1>
+                <p id="tutor-welcome" class="text-slate-500">Gestionando partes de los alumnos.</p>
+              </div>
+              <button id="logout-btn-tutor" class="bg-red-600 text-white text-sm font-bold py-2 px-4 rounded-lg hover:bg-red-700"><i class="fas fa-sign-out-alt mr-2" aria-hidden="true"></i>Cerrar Sesión</button>
+            </header>
 
-        const listenToStudentRecords = () => {
-            if(recordsSubscription) supabase.removeChannel(recordsSubscription);
-            recordsSubscription = supabase.channel('student-records')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'practicas', filter: `alumno_id=eq.${currentUserProfile.id}` }, renderStudentHistory)
-                .subscribe(() => renderStudentHistory());
-        };
+            <div class="bg-slate-50/70 p-4 rounded-xl border mb-6">
+              <div class="grid md:grid-cols-5 gap-4">
+                <input type="text" id="filter-student" placeholder="Buscar por alumno..." class="rounded-lg border-slate-300" />
+                <input type="text" id="filter-company" placeholder="Buscar por empresa..." class="rounded-lg border-slate-300" />
+                <input type="date" id="filter-date-from" class="rounded-lg border-slate-300 text-slate-500" />
+                <input type="date" id="filter-date-to" class="rounded-lg border-slate-300 text-slate-500" />
+                <div class="flex gap-2">
+                  <button id="clear-filters" class="w-full bg-slate-200 text-slate-800 font-semibold rounded-lg hover:bg-slate-300">Limpiar</button>
+                </div>
+              </div>
+              <div class="flex flex-wrap gap-4 justify-between items-center mt-4 pt-4 border-t">
+                <div class="flex gap-4 text-sm font-semibold text-slate-600">
+                  <span>Registros: <b id="stat-total-records" class="text-indigo-600">0</b></span>
+                  <span>Horas Totales: <b id="stat-total-hours" class="text-indigo-600">0.00</b></span>
+                  <span>Ausencias: <b id="stat-total-absences" class="text-red-600">0</b></span>
+                </div>
+                <div class="flex gap-2">
+                  <button id="export-csv-btn" class="bg-emerald-600 text-white text-sm font-bold py-2 px-4 rounded-lg hover:bg-emerald-700"><i class="fas fa-file-csv mr-2" aria-hidden="true"></i>Exportar CSV</button>
+                </div>
+              </div>
+            </div>
 
-        const renderStudentHistory = async () => {
-            const historyTbody = document.getElementById('student-history-tbody');
-            const { data, error } = await supabase.from('practicas').select('*').eq('alumno_id', currentUserProfile.id).order('practiceDate', { ascending: false });
-            if (error) { historyTbody.innerHTML = '<tr><td colspan="5">Error cargando historial</td></tr>'; return; }
-            historyTbody.innerHTML = data.map(r => `
-                <tr class="border-b">
-                    <td class="px-6 py-4 ${r.isAbsent ? 'text-red-500' : ''}">${r.practiceDate}</td>
-                    <td class="px-6 py-4">${r.companyName}</td>
-                    <td class="px-6 py-4 font-semibold ${r.isAbsent ? 'text-red-500' : ''}">${r.hours.toFixed(2)}</td>
-                    <td class="px-6 py-4 max-w-xs truncate">${r.isAbsent ? `Ausencia: ${r.absenceReason}` : r.activity}</td>
-                    <td class="px-6 py-4"><span class="px-2 py-1 text-xs font-semibold rounded-full ${statusStyles[r.status] || statusStyles.default}">${r.status}</span></td>
-                </tr>
-            `).join('');
-        };
+            <div class="overflow-x-auto mt-4">
+              <table class="w-full text-sm text-left">
+                <thead class="bg-slate-100 text-xs text-slate-700 uppercase">
+                  <tr>
+                    <th class="px-6 py-3">Alumno</th>
+                    <th class="px-6 py-3">Fecha</th>
+                    <th class="px-6 py-3">Empresa</th>
+                    <th class="px-6 py-3">Horas</th>
+                    <th class="px-6 py-3">Actividad/Motivo</th>
+                    <th class="px-6 py-3">Estado</th>
+                    <th class="px-6 py-3">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="records-tbody"></tbody>
+              </table>
+            </div>
 
-        absenceCheckbox.addEventListener('change', toggleAbsenceFields);
-        [startTime, endTime].forEach(el => el.addEventListener('input', computeHours));
-        toggleAbsenceFields();
-        document.getElementById('practice-date').valueAsDate = new Date();
+            <!-- Pagination -->
+            <div class="flex items-center justify-end gap-3 mt-4" id="pagination">
+              <button id="prev-page" class="px-3 py-1 rounded border text-slate-700 disabled:opacity-40">Anterior</button>
+              <span id="page-indicator" class="text-sm text-slate-600">Página 1</span>
+              <button id="next-page" class="px-3 py-1 rounded border text-slate-700 disabled:opacity-40">Siguiente</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-        // --- LÓGICA DEL TUTOR ---
-        let allTutorRecords = [];
-        let recordIdToMutate = null;
+    <!-- DELETE MODAL -->
+    <div id="confirm-delete-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50" role="dialog" aria-modal="true" aria-labelledby="delete-title">
+      <div class="bg-white w-full max-w-md p-8 rounded-2xl shadow-2xl text-center">
+        <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+          <i class="fas fa-exclamation-triangle text-2xl text-red-600" aria-hidden="true"></i>
+        </div>
+        <h2 id="delete-title" class="text-xl font-bold mt-4">Eliminar Registro</h2>
+        <p class="text-slate-500 mt-2">¿Estás seguro? Esta acción no se puede deshacer.</p>
+        <div class="mt-6 flex justify-center gap-4">
+          <button id="cancel-delete-btn" class="bg-slate-200 text-slate-800 font-semibold py-2 px-6 rounded-lg hover:bg-slate-300 focus-ring">Cancelar</button>
+          <button id="confirm-delete-btn" class="bg-red-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-red-700 focus-ring">Eliminar</button>
+        </div>
+      </div>
+    </div>
 
-        const listenToTutorRecords = () => {
-            if(recordsSubscription) supabase.removeChannel(recordsSubscription);
-            recordsSubscription = supabase.channel('tutor-records')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'practicas', filter: `aula_id=eq.${currentUserProfile.aula_id}` }, fetchAndRenderTutorTable)
-                .subscribe(() => fetchAndRenderTutorTable());
-        };
+    <!-- EDIT MODAL -->
+    <div id="edit-record-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50" role="dialog" aria-modal="true" aria-labelledby="edit-title">
+      <div class="bg-white w-full max-w-2xl p-8 rounded-2xl shadow-2xl relative max-h-[90vh] overflow-y-auto">
+        <button id="close-edit-modal" class="absolute top-4 right-4 text-slate-400 hover:text-slate-800" aria-label="Cerrar"><i class="fas fa-times text-xl" aria-hidden="true"></i></button>
+        <h2 id="edit-title" class="text-2xl font-bold mb-6">Editar Registro</h2>
+        <form id="edit-form" class="space-y-4">
+          <input type="hidden" id="edit-record-id" />
+          <div class="grid md:grid-cols-2 gap-4">
+            <label class="block"><span class="font-semibold text-slate-700">Nombre Alumno</span><input type="text" id="edit-student-name" class="mt-1 block w-full rounded-lg border-slate-300 bg-slate-100" readonly /></label>
+            <label class="block"><span class="font-semibold text-slate-700">Empresa</span><input type="text" id="edit-company-name" class="mt-1 block w-full rounded-lg border-slate-300" required /></label>
+          </div>
+          <label class="block"><span class="font-semibold text-slate-700">Fecha</span><input type="date" id="edit-practice-date" class="mt-1 block w-full rounded-lg border-slate-300" required /></label>
+          <div class="grid md:grid-cols-3 gap-4 items-end">
+            <label class="block"><span class="font-semibold text-slate-700">Hora Entrada</span><input type="time" id="edit-start-time" class="mt-1 block w-full rounded-lg border-slate-300" /></label>
+            <label class="block"><span class="font-semibold text-slate-700">Hora Salida</span><input type="time" id="edit-end-time" class="mt-1 block w-full rounded-lg border-slate-300" /></label>
+            <label class="block"><span class="font-semibold text-slate-700">Horas</span><input type="number" step="0.01" id="edit-hours" class="mt-1 block w-full rounded-lg border-slate-300 bg-slate-100" readonly /></label>
+          </div>
+          <div class="grid md:grid-cols-2 gap-4">
+            <label class="block"><span class="font-semibold text-slate-700">Estado</span>
+              <select id="edit-status" class="mt-1 block w-full rounded-lg border-slate-300">
+                <option>Pendiente</option>
+                <option>Validado</option>
+                <option>Requiere Revisión</option>
+              </select>
+            </label>
+            <label class="block"><span id="edit-activity-label" class="font-semibold text-slate-700">Actividad / Motivo Ausencia</span><textarea id="edit-activity" rows="4" class="mt-1 block w-full rounded-lg border-slate-300"></textarea></label>
+          </div>
+          <div class="flex justify-end">
+            <button type="submit" class="mt-2 bg-indigo-600 text-white font-semibold py-3 px-4 rounded-lg hover:bg-indigo-700 flex items-center justify-center">
+              <span id="edit-btn-text">Guardar Cambios</span>
+              <div id="edit-spinner" class="spinner hidden ml-2"></div>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 
-        const fetchAndRenderTutorTable = async () => {
-            const { data, error } = await supabase.from('practicas').select('*, profile:profiles(full_name)').eq('aula_id', currentUserProfile.aula_id).order('practiceDate', { ascending: false });
-            if (error) { console.error(error); return; }
-            allTutorRecords = data;
-            renderTutorTable();
-        };
+  <div id="toast-notification" class="toast" role="status" aria-live="polite"></div>
 
-        const renderTutorTable = () => {
-            const recordsTbody = document.getElementById('records-tbody');
-            const filters = { student: document.getElementById('filter-student').value.toLowerCase(), company: document.getElementById('filter-company').value.toLowerCase(), from: document.getElementById('filter-date-from').value, to: document.getElementById('filter-date-to').value };
-            const filteredRecords = allTutorRecords.filter(r => 
-                (r.profile.full_name || '').toLowerCase().includes(filters.student) && 
-                r.companyName.toLowerCase().includes(filters.company) && 
-                (!filters.from || r.practiceDate >= filters.from) && 
-                (!filters.to || r.practiceDate <= filters.to)
-            );
-            recordsTbody.innerHTML = filteredRecords.map(r => `
-                <tr class="bg-white border-b hover:bg-slate-50/70">
-                    <td class="px-6 py-4">${r.profile.full_name}</td>
-                    <td class="px-6 py-4 font-medium ${r.isAbsent ? 'text-red-600' : ''}">${r.practiceDate}</td>
-                    <td class="px-6 py-4">${r.companyName}</td>
-                    <td class="px-6 py-4 font-semibold ${r.isAbsent ? 'text-red-600' : ''}">${r.hours.toFixed(2)}</td>
-                    <td class="px-6 py-4 max-w-xs truncate" title="${r.isAbsent ? r.absenceReason : r.activity}">${r.isAbsent ? `<span class="font-semibold">Ausencia:</span> ${r.absenceReason || 'Sin motivo'}` : r.activity}</td>
-                    <td class="px-6 py-4"><span class="px-2 py-1 text-xs font-semibold rounded-full ${statusStyles[r.status] || statusStyles.default}">${r.status}</span></td>
-                    <td class="px-6 py-4 text-right">
-                        <div class="flex items-center justify-end gap-3">
-                            <button data-id="${r.id}" data-status="Validado" class="status-btn text-green-600 hover:text-green-900" title="Validar"><i class="fas fa-check-circle"></i></button>
-                            <button data-id="${r.id}" data-status="Requiere Revisión" class="status-btn text-orange-500 hover:text-orange-700" title="Marcar para revisar"><i class="fas fa-exclamation-circle"></i></button>
-                            <span class="border-l h-4"></span>
-                            <button data-id="${r.id}" class="edit-btn text-indigo-600 hover:text-indigo-900" title="Editar"><i class="fas fa-pencil-alt"></i></button>
-                            <button data-id="${r.id}" class="delete-btn text-red-600 hover:text-red-900" title="Eliminar"><i class="fas fa-trash-alt"></i></button>
-                        </div>
-                    </td>
-                </tr>
-            `).join('');
-            
-            document.getElementById('stat-total-records').textContent = filteredRecords.length;
-            document.getElementById('stat-total-hours').textContent = filteredRecords.reduce((sum, r) => sum + r.hours, 0).toFixed(2);
-            document.getElementById('stat-total-absences').textContent = filteredRecords.filter(r => r.isAbsent).length;
-        };
+  <script type="module">
+    // ---- Supabase ----
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+    const SUPABASE_URL = 'https://belsjuyzcdffyfgleoco.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJlbHNqdXl6Y2RmZnlmZ2xlb2NvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTczMjYxMzEsImV4cCI6MjA3MjkwMjEzMX0.zeOW4x9veTddouww3FLe6z7d77X3RdDLB9-hNHD6n5w';
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: true } });
 
-        document.getElementById('records-tbody').addEventListener('click', (e) => {
-            const button = e.target.closest('button');
-            if (!button) return;
-            const id = button.getAttribute('data-id');
-            if (button.classList.contains('edit-btn')) openEditModal(id);
-            if (button.classList.contains('delete-btn')) openDeleteModal(id);
-            if (button.classList.contains('status-btn')) updateRecordStatus(id, button.getAttribute('data-status'));
-        });
+    // ---- DOM Refs ----
+    const DOM = {
+      loadingView: document.getElementById('loading-view'),
+      loginView: document.getElementById('login-view'),
+      mainAppView: document.getElementById('main-app-view'),
+      studentView: document.getElementById('student-view'),
+      tutorView: document.getElementById('tutor-view'),
+      confirmDeleteModal: document.getElementById('confirm-delete-modal'),
+      editRecordModal: document.getElementById('edit-record-modal'),
+      toast: document.getElementById('toast-notification'),
+    };
 
-        const updateRecordStatus = async (id, status) => {
-            const { error } = await supabase.from('practicas').update({ status }).eq('id', id);
-            if (error) showToast('Error al actualizar estado.', 'bg-red-500');
-            else showToast(`Registro marcado como "${status}"`, 'bg-blue-500');
-        };
+    const statusStyles = {
+      'Pendiente': 'bg-yellow-100 text-yellow-800',
+      'Validado': 'bg-green-100 text-green-800',
+      'Requiere Revisión': 'bg-red-100 text-red-800',
+      'default': 'bg-slate-100 text-slate-800'
+    };
 
-        const openDeleteModal = (id) => { recordIdToMutate = id; switchView('confirm-delete-modal'); };
-        document.getElementById('cancel-delete-btn').addEventListener('click', () => switchView('main-app-view'));
-        document.getElementById('confirm-delete-btn').addEventListener('click', async () => {
-            const { error } = await supabase.from('practicas').delete().eq('id', recordIdToMutate);
-            if (error) showToast('Error al eliminar.', 'bg-red-500');
-            else showToast('Registro eliminado.', 'bg-emerald-600');
-            switchView('main-app-view');
-        });
+    const PAGE_SIZE = 25; // tutor tabla paginación
+    let currentUserProfile = null;
+    let recordsSubscription = null;
+    let allTutorRecords = [];
+    let currentPage = 1;
+    let recordIdToMutate = null;
 
-        const openEditModal = (id) => {
-            recordIdToMutate = id;
-            const record = allTutorRecords.find(r => r.id == id);
-            if (!record) return;
-            document.getElementById('edit-record-id').value = id;
-            document.getElementById('edit-student-name').value = record.profile.full_name;
-            document.getElementById('edit-company-name').value = record.companyName;
-            document.getElementById('edit-practice-date').value = record.practiceDate;
-            document.getElementById('edit-start-time').value = record.startTime;
-            document.getElementById('edit-end-time').value = record.endTime;
-            document.getElementById('edit-hours').value = record.hours.toFixed(2);
-            document.getElementById('edit-activity').value = record.isAbsent ? record.absenceReason : record.activity;
-            switchView('edit-record-modal');
-        };
+    // ---- Helpers ----
+    const showToast = (message, className = 'bg-slate-900') => {
+      DOM.toast.textContent = message;
+      DOM.toast.className = `toast show ${className}`;
+      setTimeout(() => { DOM.toast.className = 'toast'; }, 4000);
+    };
 
-        document.getElementById('close-edit-modal').addEventListener('click', () => switchView('main-app-view'));
-        document.getElementById('edit-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const id = document.getElementById('edit-record-id').value;
-            const updatedData = {
-                companyName: document.getElementById('edit-company-name').value,
-                practiceDate: document.getElementById('edit-practice-date').value,
-                startTime: document.getElementById('edit-start-time').value,
-                endTime: document.getElementById('edit-end-time').value,
-                hours: parseFloat(document.getElementById('edit-hours').value),
-            };
-            const { error } = await supabase.from('practicas').update(updatedData).eq('id', id);
-            if (error) showToast('Error al actualizar.', 'bg-red-500');
-            else showToast('Registro actualizado.', 'bg-emerald-600');
-            switchView('main-app-view');
-        });
+    const switchOnlyMainViews = (which) => {
+      // Hide main frames only (not modals)
+      [DOM.loadingView, DOM.loginView, DOM.mainAppView].forEach(el => el.classList.add('hidden'));
+      if (DOM[which]) DOM[which].classList.remove('hidden');
+    };
 
-        ['filter-student', 'filter-company', 'filter-date-from', 'filter-date-to'].forEach(id => document.getElementById(id).addEventListener('input', renderTutorTable));
+    const switchView = (view) => {
+      // Hide everything including modals
+      Object.values(DOM).forEach(el => el && el.classList && el.classList.add('hidden'));
+      if (DOM[view]) DOM[view].classList.remove('hidden');
+    };
 
-    </script>
+    const escapeHTML = (str = '') => str
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#039;');
+
+    const debounce = (fn, ms = 250) => {
+      let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+    };
+
+    const computeDiffHours = (start, end) => {
+      if (!start || !end) return 0;
+      const d = (new Date(`1970-01-01T${end}`) - new Date(`1970-01-01T${start}`)) / 36e5;
+      return Math.max(0, d);
+    };
+
+    const todayISO = () => new Date().toISOString().slice(0,10);
+
+    // ---- Auth State ----
+    switchOnlyMainViews('loadingView');
+
+    supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*, aulas(nombre, hours_target)')
+          .eq('id', session.user.id)
+          .single();
+
+        if (error || !data) {
+          showToast('No se pudo cargar el perfil de usuario.', 'bg-red-600');
+          await supabase.auth.signOut();
+          return;
+        }
+
+        currentUserProfile = data;
+        switchOnlyMainViews('mainAppView');
+
+        // Role-based
+        if (data.role === 'tutor') {
+          DOM.tutorView.classList.remove('hidden');
+          document.getElementById('tutor-welcome').textContent = `Gestionando el aula: ${data.aulas ? data.aulas.nombre : '(Aula no asignada)'}`;
+          listenToTutorRecords();
+        } else {
+          DOM.studentView.classList.remove('hidden');
+          document.getElementById('student-welcome').textContent = `Bienvenido/a, ${data.full_name || 'Alumno'}`;
+          listenToStudentRecords();
+        }
+      } else {
+        // Reset subs
+        if (recordsSubscription) { supabase.removeChannel(recordsSubscription); recordsSubscription = null; }
+        currentUserProfile = null;
+        switchOnlyMainViews('loginView');
+      }
+    });
+
+    // ---- Login ----
+    const loginForm = document.getElementById('login-form');
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+      const btn = document.getElementById('login-button');
+      const spin = document.getElementById('login-spinner');
+      btn.disabled = true; spin.classList.remove('hidden');
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) showToast(`Error: ${error.message}`, 'bg-red-600');
+      btn.disabled = false; spin.classList.add('hidden');
+    });
+
+    document.getElementById('logout-btn-student').addEventListener('click', () => supabase.auth.signOut());
+    document.getElementById('logout-btn-tutor').addEventListener('click', () => supabase.auth.signOut());
+
+    // ---- Student Logic ----
+    const practiceForm = document.getElementById('practice-form');
+    const absenceCheckbox = document.getElementById('absence-checkbox');
+    const attendanceFields = document.getElementById('attendance-fields');
+    const absenceFields = document.getElementById('absence-fields');
+    const startTime = document.getElementById('start-time');
+    const endTime = document.getElementById('end-time');
+    const hoursComputed = document.getElementById('hours-computed');
+    const warningMessage = document.getElementById('warning-message');
+
+    const toggleAbsenceFields = () => {
+      attendanceFields.classList.toggle('hidden', absenceCheckbox.checked);
+      absenceFields.classList.toggle('hidden', !absenceCheckbox.checked);
+      computeHours();
+    };
+
+    const computeHours = () => {
+      if (absenceCheckbox.checked) { hoursComputed.textContent = '0.00'; return; }
+      const h = computeDiffHours(startTime.value, endTime.value);
+      hoursComputed.textContent = h.toFixed(2);
+      const invalid = (startTime.value && endTime.value && h <= 0) || h > 12; // límite razonable diario
+      warningMessage.classList.toggle('hidden', !invalid);
+      document.getElementById('submit-button').disabled = invalid;
+    };
+
+    absenceCheckbox.addEventListener('change', toggleAbsenceFields);
+    [startTime, endTime].forEach(el => el.addEventListener('input', computeHours));
+    document.getElementById('reset-button').addEventListener('click', () => { setTimeout(computeHours, 0); });
+
+    // default date hoy, no futura
+    const practiceDate = document.getElementById('practice-date');
+    practiceDate.valueAsDate = new Date();
+    practiceDate.max = todayISO();
+
+    practiceForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      // Validaciones
+      const company = document.getElementById('company-name').value.trim();
+      const date = practiceDate.value;
+      const isAbsent = absenceCheckbox.checked;
+      const start = isAbsent ? null : startTime.value;
+      const end = isAbsent ? null : endTime.value;
+      const activity = isAbsent ? null : document.getElementById('activity-description').value.trim();
+      const absenceReason = isAbsent ? document.getElementById('absence-reason').value.trim() : null;
+
+      if (!date) return showToast('La fecha es obligatoria.', 'bg-red-600');
+      if (!isAbsent) {
+        const hrs = computeDiffHours(start, end);
+        if (!start || !end) return showToast('Indica hora de entrada y salida.', 'bg-red-600');
+        if (hrs <= 0) return showToast('La hora de salida debe ser posterior a la de entrada.', 'bg-red-600');
+        if (hrs > 12) return showToast('Demasiadas horas para un día (máx. 12).', 'bg-red-600');
+      } else if (!absenceReason) {
+        return showToast('Indica el motivo de la ausencia.', 'bg-red-600');
+      }
+
+      // Evitar duplicado por alumno + fecha
+      const { data: dup, error: dupErr } = await supabase
+        .from('practicas')
+        .select('id')
+        .eq('alumno_id', currentUserProfile.id)
+        .eq('practiceDate', date)
+        .limit(1);
+      if (!dupErr && dup && dup.length) {
+        return showToast('Ya existe un parte para esta fecha. Edita el existente.', 'bg-orange-600');
+      }
+
+      const record = {
+        alumno_id: currentUserProfile.id,
+        aula_id: currentUserProfile.aula_id,
+        companyName: company,
+        practiceDate: date,
+        isAbsent,
+        startTime: start,
+        endTime: end,
+        activity: activity,
+        absenceReason: absenceReason,
+        hours: isAbsent ? 0 : parseFloat(hoursComputed.textContent) || 0,
+        status: 'Pendiente',
+      };
+
+      const btn = document.getElementById('submit-button');
+      const spin = document.getElementById('submit-spinner');
+      btn.disabled = true; spin.classList.remove('hidden');
+      const { error } = await supabase.from('practicas').insert([record]);
+      if (error) showToast('Error al guardar el parte.', 'bg-red-600');
+      else { showToast('Parte guardado con éxito', 'bg-emerald-600'); practiceForm.reset(); practiceDate.valueAsDate = new Date(); toggleAbsenceFields(); }
+      btn.disabled = false; spin.classList.add('hidden');
+    });
+
+    const listenToStudentRecords = () => {
+      if (recordsSubscription) supabase.removeChannel(recordsSubscription);
+      recordsSubscription = supabase
+        .channel('student-records')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'practicas', filter: `alumno_id=eq.${currentUserProfile.id}` }, renderStudentHistory)
+        .subscribe(() => renderStudentHistory());
+    };
+
+    const renderStudentHistory = async () => {
+      const tbody = document.getElementById('student-history-tbody');
+      const { data, error } = await supabase
+        .from('practicas')
+        .select('*')
+        .eq('alumno_id', currentUserProfile.id)
+        .order('practiceDate', { ascending: false });
+      if (error) { tbody.innerHTML = '<tr><td class="px-6 py-4" colspan="5">Error cargando historial</td></tr>'; return; }
+
+      const rows = data || [];
+      // tabla
+      tbody.innerHTML = rows.map(r => `
+        <tr class="border-b">
+          <td class="px-6 py-4 ${r.isAbsent ? 'text-red-500' : ''}">${escapeHTML(r.practiceDate)}</td>
+          <td class="px-6 py-4">${escapeHTML(r.companyName)}</td>
+          <td class="px-6 py-4 font-semibold ${r.isAbsent ? 'text-red-500' : ''}">${Number(r.hours || 0).toFixed(2)}</td>
+          <td class="px-6 py-4 max-w-xs truncate" title="${escapeHTML(r.isAbsent ? (r.absenceReason || '') : (r.activity || ''))}">${r.isAbsent ? `Ausencia: ${escapeHTML(r.absenceReason || '')}` : escapeHTML(r.activity || '')}</td>
+          <td class="px-6 py-4"><span class="px-2 py-1 text-xs font-semibold rounded-full ${statusStyles[r.status] || statusStyles.default}">${escapeHTML(r.status || 'Pendiente')}</span></td>
+        </tr>`).join('');
+
+      // estadísticas + charts
+      renderStudentStats(rows);
+    };
+
+    // ---- Tutor Logic ----
+    const listenToTutorRecords = () => {
+      if (recordsSubscription) supabase.removeChannel(recordsSubscription);
+      recordsSubscription = supabase
+        .channel('tutor-records')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'practicas', filter: `aula_id=eq.${currentUserProfile.aula_id}` }, fetchAndRenderTutorTable)
+        .subscribe(() => fetchAndRenderTutorTable());
+    };
+
+    const fetchAndRenderTutorTable = async () => {
+      const { data, error } = await supabase
+        .from('practicas')
+        .select('*, profile:profiles(full_name)')
+        .eq('aula_id', currentUserProfile.aula_id)
+        .order('practiceDate', { ascending: false });
+      if (error) { console.error(error); return; }
+      allTutorRecords = data || [];
+      currentPage = 1;
+      renderTutorTable();
+    };
+
+    const applyTutorFilters = () => {
+      const student = (document.getElementById('filter-student').value || '').toLowerCase();
+      const company = (document.getElementById('filter-company').value || '').toLowerCase();
+      const from = document.getElementById('filter-date-from').value;
+      const to = document.getElementById('filter-date-to').value;
+      return allTutorRecords.filter(r =>
+        ((r.profile?.full_name || '').toLowerCase().includes(student)) &&
+        ((r.companyName || '').toLowerCase().includes(company)) &&
+        (!from || r.practiceDate >= from) &&
+        (!to || r.practiceDate <= to)
+      );
+    };
+
+    const renderTutorTable = () => {
+      const recordsTbody = document.getElementById('records-tbody');
+      const filtered = applyTutorFilters();
+
+      // Estadísticas
+      document.getElementById('stat-total-records').textContent = filtered.length;
+      document.getElementById('stat-total-hours').textContent = filtered.reduce((sum, r) => sum + (r.hours || 0), 0).toFixed(2);
+      document.getElementById('stat-total-absences').textContent = filtered.filter(r => r.isAbsent).length;
+
+      // Paginación
+      const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+      currentPage = Math.min(currentPage, totalPages);
+      const start = (currentPage - 1) * PAGE_SIZE;
+      const pageItems = filtered.slice(start, start + PAGE_SIZE);
+
+      recordsTbody.innerHTML = pageItems.map(r => `
+        <tr class="bg-white border-b hover:bg-slate-50/70">
+          <td class="px-6 py-4">${escapeHTML(r.profile?.full_name || '')}</td>
+          <td class="px-6 py-4 font-medium ${r.isAbsent ? 'text-red-600' : ''}">${escapeHTML(r.practiceDate)}</td>
+          <td class="px-6 py-4">${escapeHTML(r.companyName || '')}</td>
+          <td class="px-6 py-4 font-semibold ${r.isAbsent ? 'text-red-600' : ''}">${Number(r.hours || 0).toFixed(2)}</td>
+          <td class="px-6 py-4 max-w-xs truncate" title="${escapeHTML(r.isAbsent ? (r.absenceReason || '') : (r.activity || ''))}">${r.isAbsent ? `<span class='font-semibold'>Ausencia:</span> ${escapeHTML(r.absenceReason || 'Sin motivo')}` : escapeHTML(r.activity || '')}</td>
+          <td class="px-6 py-4"><span class="px-2 py-1 text-xs font-semibold rounded-full ${statusStyles[r.status] || statusStyles.default}">${escapeHTML(r.status || 'Pendiente')}</span></td>
+          <td class="px-6 py-4 text-right">
+            <div class="flex items-center justify-end gap-3">
+              <button data-id="${r.id}" data-status="Validado" class="status-btn text-green-600 hover:text-green-900" title="Validar"><i class="fas fa-check-circle" aria-hidden="true"></i></button>
+              <button data-id="${r.id}" data-status="Requiere Revisión" class="status-btn text-orange-500 hover:text-orange-700" title="Marcar para revisar"><i class="fas fa-exclamation-circle" aria-hidden="true"></i></button>
+              <span class="border-l h-4"></span>
+              <button data-id="${r.id}" class="edit-btn text-indigo-600 hover:text-indigo-900" title="Editar"><i class="fas fa-pencil-alt" aria-hidden="true"></i></button>
+              <button data-id="${r.id}" class="delete-btn text-red-600 hover:text-red-900" title="Eliminar"><i class="fas fa-trash-alt" aria-hidden="true"></i></button>
+            </div>
+          </td>
+        </tr>`).join('');
+
+      document.getElementById('page-indicator').textContent = `Página ${currentPage} / ${totalPages}`;
+      document.getElementById('prev-page').disabled = currentPage <= 1;
+      document.getElementById('next-page').disabled = currentPage >= totalPages;
+    };
+
+    document.getElementById('records-tbody').addEventListener('click', (e) => {
+      const button = e.target.closest('button');
+      if (!button) return;
+      const id = button.getAttribute('data-id');
+      if (button.classList.contains('edit-btn')) openEditModal(id);
+      if (button.classList.contains('delete-btn')) openDeleteModal(id);
+      if (button.classList.contains('status-btn')) updateRecordStatus(id, button.getAttribute('data-status'));
+    });
+
+    document.getElementById('prev-page').addEventListener('click', () => { currentPage = Math.max(1, currentPage - 1); renderTutorTable(); });
+    document.getElementById('next-page').addEventListener('click', () => { currentPage += 1; renderTutorTable(); });
+
+    ['filter-student', 'filter-company', 'filter-date-from', 'filter-date-to']
+      .forEach(id => document.getElementById(id).addEventListener('input', debounce(() => { currentPage = 1; renderTutorTable(); }, 200)));
+    document.getElementById('clear-filters').addEventListener('click', () => {
+      ['filter-student', 'filter-company', 'filter-date-from', 'filter-date-to']
+        .forEach(id => document.getElementById(id).value = '');
+      currentPage = 1; renderTutorTable();
+    });
+
+    const updateRecordStatus = async (id, status) => {
+      const { error } = await supabase.from('practicas').update({ status }).eq('id', id);
+      if (error) showToast('Error al actualizar estado.', 'bg-red-500');
+      else showToast(`Registro marcado como "${status}"`, 'bg-blue-600');
+    };
+
+    // ---- Delete Modal ----
+    const openDeleteModal = (id) => { recordIdToMutate = id; DOM.confirmDeleteModal.classList.remove('hidden'); };
+    document.getElementById('cancel-delete-btn').addEventListener('click', () => DOM.confirmDeleteModal.classList.add('hidden'));
+    document.getElementById('confirm-delete-btn').addEventListener('click', async () => {
+      const { error } = await supabase.from('practicas').delete().eq('id', recordIdToMutate);
+      if (error) showToast('Error al eliminar.', 'bg-red-500');
+      else showToast('Registro eliminado.', 'bg-emerald-600');
+      DOM.confirmDeleteModal.classList.add('hidden');
+    });
+
+    // ---- Edit Modal ----
+    const openEditModal = (id) => {
+      recordIdToMutate = id;
+      const r = allTutorRecords.find(x => x.id == id);
+      if (!r) return;
+      document.getElementById('edit-record-id').value = id;
+      document.getElementById('edit-student-name').value = r.profile?.full_name || '';
+      document.getElementById('edit-company-name').value = r.companyName || '';
+      document.getElementById('edit-practice-date').value = r.practiceDate || '';
+      document.getElementById('edit-start-time').value = r.startTime || '';
+      document.getElementById('edit-end-time').value = r.endTime || '';
+      document.getElementById('edit-hours').value = Number(r.hours || 0).toFixed(2);
+      document.getElementById('edit-activity').value = r.isAbsent ? (r.absenceReason || '') : (r.activity || '');
+      document.getElementById('edit-status').value = r.status || 'Pendiente';
+      DOM.editRecordModal.classList.remove('hidden');
+    };
+    document.getElementById('close-edit-modal').addEventListener('click', () => DOM.editRecordModal.classList.add('hidden'));
+
+    const recalcEditHours = () => {
+      const s = document.getElementById('edit-start-time').value;
+      const e = document.getElementById('edit-end-time').value;
+      document.getElementById('edit-hours').value = computeDiffHours(s, e).toFixed(2);
+    };
+    document.getElementById('edit-start-time').addEventListener('input', recalcEditHours);
+    document.getElementById('edit-end-time').addEventListener('input', recalcEditHours);
+
+    document.getElementById('edit-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('edit-record-id').value;
+      const s = document.getElementById('edit-start-time').value;
+      const eH = document.getElementById('edit-end-time').value;
+      const hrs = computeDiffHours(s, eH);
+      if (hrs < 0) return showToast('Horas inválidas.', 'bg-red-600');
+
+      const updatedData = {
+        companyName: document.getElementById('edit-company-name').value.trim(),
+        practiceDate: document.getElementById('edit-practice-date').value,
+        startTime: s,
+        endTime: eH,
+        hours: hrs,
+        status: document.getElementById('edit-status').value,
+        activity: document.getElementById('edit-activity').value.trim(),
+      };
+
+      const btnText = document.getElementById('edit-btn-text');
+      const spin = document.getElementById('edit-spinner');
+      spin.classList.remove('hidden'); btnText.textContent = 'Guardando...';
+      const { error } = await supabase.from('practicas').update(updatedData).eq('id', id);
+      spin.classList.add('hidden'); btnText.textContent = 'Guardar Cambios';
+
+      if (error) showToast('Error al actualizar.', 'bg-red-500');
+      else { showToast('Registro actualizado.', 'bg-emerald-600'); DOM.editRecordModal.classList.add('hidden'); }
+    });
+
+    // ---- CSV Export ----
+    document.getElementById('export-csv-btn').addEventListener('click', () => {
+      const rows = applyTutorFilters();
+      if (!rows.length) { showToast('No hay datos que exportar.', 'bg-slate-700'); return; }
+      const headers = ['Alumno','Fecha','Empresa','Horas','Actividad/Motivo','Estado'];
+      const csv = [headers.join(';')].concat(rows.map(r => [
+        (r.profile?.full_name || ''),
+        (r.practiceDate || ''),
+        (r.companyName || ''),
+        (Number(r.hours || 0).toFixed(2)),
+        (r.isAbsent ? `Ausencia: ${r.absenceReason || ''}` : (r.activity || '')),
+        (r.status || 'Pendiente'),
+      ].map(v => '"' + String(v).replaceAll('"','""') + '"').join(';'))).join('\n');
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `practicas_${todayISO()}.csv`; a.click();
+      URL.revokeObjectURL(url);
+    });
+      // ---- Student Stats & Charts ----
+    let stChart30 = null; let stChartCompany = null; let stChartMonthly = null;
+
+    const renderStudentStats = (rows) => {
+      const totals = rows.reduce((acc, r) => {
+        acc.totalHours += (r.hours || 0);
+        if (!r.isAbsent) { acc.days++; }
+        else { acc.absences++; }
+        return acc;
+      }, { totalHours: 0, days: 0, absences: 0 });
+      const avg = totals.days ? (totals.totalHours / totals.days) : 0;
+
+      document.getElementById('st-kpi-hours').textContent = totals.totalHours.toFixed(2);
+      document.getElementById('st-kpi-days').textContent = String(totals.days);
+      document.getElementById('st-kpi-absences').textContent = String(totals.absences);
+      document.getElementById('st-kpi-avg').textContent = avg.toFixed(2);
+      document.getElementById('st-kpi-streak').textContent = `${computeAttendanceStreak(rows)} días`;
+
+      renderChartHours30(rows);
+      renderChartCompany(rows);
+      renderChartMonthly(rows);
+    };
+
+    const computeAttendanceStreak = (rows) => {
+      // racha de días consecutivos asistidos hasta el último registro (no ausente)
+      const attendedDates = rows.filter(r => !r.isAbsent).map(r => r.practiceDate).sort();
+      if (!attendedDates.length) return 0;
+      // normalizamos a Date sin hora
+      const toDate = s => new Date(s + 'T00:00:00');
+      let maxStreak = 0, curStreak = 0;
+      for (let i = 0; i < attendedDates.length; i++) {
+        if (i === 0) { curStreak = 1; maxStreak = 1; continue; }
+        const prev = toDate(attendedDates[i-1]);
+        const curr = toDate(attendedDates[i]);
+        const diff = (curr - prev) / 86400000; // días
+        if (diff === 1) { curStreak++; } else if (diff > 1) { curStreak = 1; }
+        if (curStreak > maxStreak) maxStreak = curStreak;
+      }
+      return maxStreak;
+    };
+
+    const renderChartHours30 = (rows) => {
+      const now = new Date();
+      const dayISO = (d) => d.toISOString().slice(0,10);
+      // mapa últimos 30 días
+      const labels = [];
+      const map = {};
+      for (let i = 29; i >= 0; i--) {
+        const d = new Date(now); d.setDate(now.getDate() - i);
+        const k = dayISO(d);
+        labels.push(k); map[k] = 0;
+      }
+      rows.forEach(r => { if (!r.isAbsent && map[r.practiceDate] != null) map[r.practiceDate] += (r.hours || 0); });
+      const data = labels.map(k => Number(map[k]).toFixed(2));
+
+      const ctx = document.getElementById('st-chart-hours-30');
+      if (stChart30) stChart30.destroy();
+      stChart30 = new Chart(ctx, {
+        type: 'line',
+        data: { labels, datasets: [{ label: 'Horas', data }] },
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } } }
+      });
+      ctx.parentElement.style.height = '280px';
+    };
+
+    const renderChartCompany = (rows) => {
+      const map = new Map();
+      rows.forEach(r => { if (!r.isAbsent) map.set(r.companyName, (map.get(r.companyName) || 0) + (r.hours || 0)); });
+      const labels = Array.from(map.keys());
+      const data = Array.from(map.values()).map(v => Number(v.toFixed(2)));
+      const ctx = document.getElementById('st-chart-company');
+      if (stChartCompany) stChartCompany.destroy();
+      stChartCompany = new Chart(ctx, {
+        type: 'doughnut',
+        data: { labels, datasets: [{ data }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+      });
+      ctx.parentElement.style.height = '280px';
+    };
+
+    const renderChartMonthly = (rows) => {
+      const year = new Date().getFullYear();
+      const labels = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+      const hours = new Array(12).fill(0);
+      rows.forEach(r => {
+        if (!r.isAbsent && r.practiceDate?.startsWith(String(year))) {
+          const m = Number(r.practiceDate.slice(5,7)) - 1;
+          hours[m] += (r.hours || 0);
+        }
+      });
+      const ctx = document.getElementById('st-chart-monthly');
+      if (stChartMonthly) stChartMonthly.destroy();
+      stChartMonthly = new Chart(ctx, {
+        type: 'bar',
+        data: { labels, datasets: [{ label: 'Horas', data: hours.map(h => Number(h.toFixed(2))) }] },
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } } }
+      });
+      ctx.parentElement.style.height = '300px';
+    };
+
+    // ---- Student CSV export & print ----
+    document.getElementById('student-export-csv').addEventListener('click', async () => {
+      const { data, error } = await supabase
+        .from('practicas')
+        .select('practiceDate, companyName, hours, isAbsent, activity, absenceReason, status')
+        .eq('alumno_id', currentUserProfile.id)
+        .order('practiceDate', { ascending: false });
+      if (error) return showToast('No se pudo exportar.', 'bg-red-600');
+      const headers = ['Fecha','Empresa','Horas','Tipo','Detalle','Estado'];
+      const csv = [headers.join(';')].concat((data||[]).map(r => {
+        const tipo = r.isAbsent ? 'Ausencia' : 'Asistencia';
+        const det = r.isAbsent ? (r.absenceReason||'') : (r.activity||'');
+        return [r.practiceDate, r.companyName, Number(r.hours||0).toFixed(2), tipo, det, (r.status||'Pendiente')]
+          .map(v => '"' + String(v).replaceAll('"','""') + '"').join(';');
+      })).join('
+');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `mis_practicas_${todayISO()}.csv`; a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    document.getElementById('student-print-report').addEventListener('click', () => window.print());
+      // === Enhancements: progreso de horas + PDFs ===
+    // Inserta widget de progreso si no existe
+    const ensureProgressWidget = () => {
+      const kpiSection = document.querySelector('#student-view section');
+      if (!kpiSection) return;
+      // Busca si ya existe
+      if (document.getElementById('st-progress-bar')) return;
+      // Crea tarjeta de progreso al final del grid de KPIs
+      const grid = kpiSection.querySelector('.grid');
+      if (!grid) return;
+      const card = document.createElement('div');
+      card.className = 'bg-sky-50 border border-sky-100 rounded-xl p-4 col-span-2';
+      card.innerHTML = `
+        <p class="text-xs uppercase text-sky-700 font-semibold">Progreso de horas</p>
+        <div class="mt-2 w-full bg-sky-100 rounded-full h-3 overflow-hidden">
+          <div id="st-progress-bar" class="h-3 bg-sky-500" style="width:0%"></div>
+        </div>
+        <p id="st-progress-text" class="text-sm text-sky-900 mt-1 font-semibold">0 / 0 h (0%)</p>`;
+      grid.appendChild(card);
+    };
+
+    // Reemplaza renderStudentStats para añadir progreso y aprovechar html2pdf
+    const _renderStudentStats_orig = renderStudentStats;
+    renderStudentStats = (rows) => {
+      ensureProgressWidget();
+      // KPIs base (gráficas incluidas)
+      _renderStudentStats_orig(rows);
+      // Actualiza progreso usando horas objetivo del aula
+      const target = Number(currentUserProfile?.aulas?.hours_target || 0);
+      const total = rows.reduce((s,r)=>s+(r.hours||0),0);
+      const pct = target>0 ? Math.min(100, (total/target)*100) : 0;
+      const bar = document.getElementById('st-progress-bar');
+      const txt = document.getElementById('st-progress-text');
+      if (bar) bar.style.width = pct.toFixed(0)+'%';
+      if (txt) txt.textContent = `${total.toFixed(2)} / ${target.toFixed(2)} h (${pct.toFixed(0)}%)`;
+    };
+
+    // Botón de informe mensual PDF para tutor (si no existe)
+    const tutorFiltersBar = document.querySelector('#tutor-view .bg-slate-50\/70');
+    if (tutorFiltersBar && !document.getElementById('tutor-print-month')) {
+      const btn = document.createElement('button');
+      btn.id = 'tutor-print-month';
+      btn.className = 'w-full md:w-auto bg-slate-800 text-white font-semibold rounded-lg hover:bg-slate-900 px-4';
+      btn.innerHTML = '<i class="fa-solid fa-file-pdf mr-2"></i> Informe mensual PDF';
+      tutorFiltersBar.querySelector('.flex.gap-2').appendChild(btn);
+    }
+
+    // Listener de PDF para tutor (usa filtros activos)
+    const tutorPrintBtn = document.getElementById('tutor-print-month');
+    if (tutorPrintBtn) {
+      tutorPrintBtn.addEventListener('click', () => {
+        const filtered = applyTutorFilters();
+        if (!filtered.length) return showToast('No hay datos para imprimir.', 'bg-slate-700');
+        const el = document.createElement('div'); el.style.padding = '16px'; el.style.fontFamily = 'Inter, sans-serif';
+        el.innerHTML = `
+          <h1 style="font-size:20px;margin:0 0 6px 0;">Informe mensual — Aula ${escapeHTML(currentUserProfile?.aulas?.nombre || '')}</h1>
+          <p style="margin:0 0 12px 0;color:#475569;">Fecha: ${todayISO()}</p>
+          <table style="width:100%;border-collapse:collapse;font-size:12px;">
+            <thead><tr>
+              <th style="text-align:left;border-bottom:1px solid #e2e8f0;padding:6px;">Alumno</th>
+              <th style="text-align:left;border-bottom:1px solid #e2e8f0;padding:6px;">Fecha</th>
+              <th style="text-align:left;border-bottom:1px solid #e2e8f0;padding:6px;">Empresa</th>
+              <th style="text-align:left;border-bottom:1px solid #e2e8f0;padding:6px;">Horas</th>
+              <th style="text-align:left;border-bottom:1px solid #e2e8f0;padding:6px;">Detalle</th>
+              <th style="text-align:left;border-bottom:1px solid #e2e8f0;padding:6px;">Estado</th>
+            </tr></thead>
+            <tbody>
+              ${filtered.map(r => `<tr>
+                <td style=\"border-bottom:1px solid #f1f5f9;padding:6px;\">${escapeHTML(r.profile?.full_name||'')}</td>
+                <td style=\"border-bottom:1px solid #f1f5f9;padding:6px;\">${escapeHTML(r.practiceDate)}</td>
+                <td style=\"border-bottom:1px solid #f1f5f9;padding:6px;\">${escapeHTML(r.companyName||'')}</td>
+                <td style=\"border-bottom:1px solid #f1f5f9;padding:6px;\">${Number(r.hours||0).toFixed(2)}</td>
+                <td style=\"border-bottom:1px solid #f1f5f9;padding:6px;\">${escapeHTML(r.isAbsent ? (r.absenceReason||'') : (r.activity||''))}</td>
+                <td style=\"border-bottom:1px solid #f1f5f9;padding:6px;\">${escapeHTML(r.status||'Pendiente')}</td>
+              </tr>`).join('')}
+            </tbody>
+          </table>`;
+        html2pdf().set({ filename: `informe_aula_${todayISO()}.pdf`, image: { type: 'jpeg', quality: 0.95 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'pt', format: 'a4', orientation: 'landscape' } }).from(el).save();
+      });
+    }
+  </script>
 </body>
 </html>
