@@ -215,29 +215,31 @@
         };
 
         const switchView = (view) => {
-            // Ocultar todas las vistas principales y modales
-            DOMElements.loadingView.classList.add('hidden');
-            DOMElements.landingView.classList.add('hidden');
-            DOMElements.mainAppView.classList.add('hidden');
-            DOMElements.studentView.classList.add('hidden');
-            DOMElements.tutorView.classList.add('hidden');
-            DOMElements.tutorAuthModal.classList.add('hidden');
-            DOMElements.confirmDeleteModal.classList.add('hidden');
-            DOMElements.editRecordModal.classList.add('hidden');
+            const mainViews = ['loadingView', 'landingView', 'mainAppView'];
+            mainViews.forEach(v => DOMElements[v].classList.add('hidden'));
 
-            // Lógica para mostrar la vista correcta
+            const modalViews = ['tutorAuthModal', 'confirmDeleteModal', 'editRecordModal'];
+
             if (view === 'student-view' || view === 'tutor-view') {
                 DOMElements.mainAppView.classList.remove('hidden');
+                DOMElements.studentView.classList.add('hidden');
+                DOMElements.tutorView.classList.add('hidden');
                 DOMElements[view].classList.remove('hidden');
-            } else if (view === 'landing-view' || view === 'loading-view') {
-                DOMElements[view].classList.remove('hidden');
-            } else { // Lógica para MODALES: se muestran sobre la vista actual
-                const user = supabase.auth.getUser();
-                // Si hay un usuario, el fondo es la app principal, si no, es el landing
-                if (user) DOMElements.mainAppView.classList.remove('hidden');
-                else DOMElements.landingView.classList.remove('hidden');
-                
-                DOMElements[view].classList.remove('hidden');
+            } else if (DOMElements[view]) {
+                // Si es una vista principal (loading, landing) o un modal
+                if (modalViews.includes(view)) {
+                    // Si es un modal, nos aseguramos que la vista principal o el landing estén visibles detrás
+                    const { data: { user } } = supabase.auth.getUser();
+                    if(user) {
+                        DOMElements.mainAppView.classList.remove('hidden');
+                    } else {
+                        DOMElements.landingView.classList.remove('hidden');
+                    }
+                    DOMElements[view].classList.remove('hidden');
+                } else {
+                    // Si es una vista principal, simplemente la mostramos
+                    DOMElements[view].classList.remove('hidden');
+                }
             }
         };
         
@@ -602,3 +604,4 @@
     </script>
 </body>
 </html>
+
